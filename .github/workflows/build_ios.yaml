@@ -36,7 +36,7 @@ jobs:
           ls ~/Library/MobileDevice/Provisioning\ Profiles/
 
       - name: Build IPA
-        run: flutter build ipa --release
+        run: flutter build ipa --release --extra-build-args="DEVELOPMENT_TEAM=Q54GH6LT39"
         # If you don't have exportOptions.plist, try just: flutter build ipa --release
 
       - name: Upload IPA
