@@ -10,35 +10,50 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Flutter
+      - name: Set up Flutter (with cache)
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+          cache: true
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Fix Bundle ID in Xcode project
+      - name: Change Bundle ID
         run: |
-          # Change Bundle ID from original to your unique one
           sed -i '' 's/com\.anandnet\.harmonymusic/com.aarsanop.harmonymusic/g' ios/Runner.xcodeproj/project.pbxproj
+
+      - name: Inject Development Team & Provisioning Profile
+        run: |
+          TEAM="Q54GH6LT39"
+          PROFILE="HarmonyMusicIOS"
+          for config in Debug Release Profile; do
+            sed -i '' "/$config/,/buildSettings = {/ {
+              /buildSettings = {/ {
+                /DEVELOPMENT_TEAM = .*;/! s/buildSettings = {/& DEVELOPMENT_TEAM = $TEAM;/
+              }
+            }" ios/Runner.xcodeproj/project.pbxproj
+            sed -i '' "/$config/,/buildSettings = {/ {
+              /buildSettings = {/ {
+                /PROVISIONING_PROFILE_SPECIFIER = .*;/! s/buildSettings = {/& PROVISIONING_PROFILE_SPECIFIER = \"$PROFILE\";/
+              }
+            }" ios/Runner.xcodeproj/project.pbxproj
+          done
 
       - name: Decode and import signing certificate
         run: |
           echo "${{ secrets.BUILD_CERTIFICATE_BASE64 }}" | base64 --decode > certificate.p12
           echo "${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}" | base64 --decode > profile.mobileprovision
-
           security create-keychain -p temp_keychain_password build.keychain
           security default-keychain -s build.keychain
           security unlock-keychain -p temp_keychain_password build.keychain
           security import certificate.p12 -k build.keychain -P "${{ secrets.P12_PASSWORD }}" -A -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k temp_keychain_password build.keychain
-
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
 
       - name: Build IPA
-        run: flutter build ipa --release --build-args "DEVELOPMENT_TEAM=Q54GH6LT39 PROVISIONING_PROFILE_SPECIFIER=HarmonyMusicIOS"
+        run: flutter build ipa --release
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
