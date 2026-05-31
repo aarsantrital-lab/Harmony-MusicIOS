@@ -1,0 +1,34 @@
+workflows:
+  ios-release:
+    name: iOS Build
+    environment:
+      flutter: stable
+      xcode: latest
+      vars:
+        BUNDLE_ID: "com.aarsanop.harmonymusic"
+      certificates:
+        - certificate: AarsanOP.p12
+          password: Aarshan@9746883113   # <-- change this
+      provisioning_profiles:
+        - profile: HarmonyMusicIOS.mobileprovision
+    cache:
+      cache_paths:
+        - $CM_BUILD_DIR/.pub-cache
+    scripts:
+      - name: Fix Bundle ID
+        script: |
+          sed -i '' 's/com\.anandnet\.harmonymusic/$BUNDLE_ID/g' ios/Runner.xcodeproj/project.pbxproj
+          echo "Bundle ID changed to $BUNDLE_ID"
+      - name: Install dependencies
+        script: flutter pub get
+      - name: Build IPA
+        script: |
+          flutter build ipa --release \
+            --build-name=1.0.0 \
+            --build-number=1
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      email:
+        recipients:
+          - aarsantrital@gmail.com
