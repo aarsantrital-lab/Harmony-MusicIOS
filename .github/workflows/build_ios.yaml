@@ -10,17 +10,37 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: subosito/flutter-action@v2
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build IPA (attempt)
-        run: flutter build ipa --release
-        continue-on-error: true
+      - name: Decode and import signing certificate
+        run: |
+          echo "${{ secrets.BUILD_CERTIFICATE_BASE64 }}" | base64 --decode > certificate.p12
+          echo "${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}" | base64 --decode > profile.mobileprovision
 
-      - name: Build IPA (fallback)
-        if: failure()
-        run: flutter build ipa --release --no-codesign
+          security create-keychain -p temp_keychain_password build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p temp_keychain_password build.keychain
+          security import certificate.p12 -k build.keychain -P "${{ secrets.P12_PASSWORD }}" -A -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k temp_keychain_password build.keychain
+
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+
+          # Optional: print what profiles are installed (for debugging)
+          ls ~/Library/MobileDevice/Provisioning\ Profiles/
+
+      - name: Build IPA
+        run: flutter build ipa --release --export-options-plist=ios/exportOptions.plist
+        # If you don't have exportOptions.plist, try just: flutter build ipa --release
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: HarmonyMusic.ipa
+          path: build/ios/ipa/*.ipa
