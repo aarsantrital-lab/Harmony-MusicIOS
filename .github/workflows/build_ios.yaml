@@ -18,6 +18,11 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Fix Bundle ID in Xcode project
+        run: |
+          # Change Bundle ID from original to your unique one
+          sed -i '' 's/com\.anandnet\.harmonymusic/com.aarsanop.harmonymusic/g' ios/Runner.xcodeproj/project.pbxproj
+
       - name: Decode and import signing certificate
         run: |
           echo "${{ secrets.BUILD_CERTIFICATE_BASE64 }}" | base64 --decode > certificate.p12
@@ -32,28 +37,8 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
 
-      - name: Create ExportOptions.plist
-        run: |
-          cat > ios/exportOptions.plist <<EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key>
-            <string>development</string>
-            <key>teamID</key>
-            <string>Q54GH6LT39</string>
-            <key>provisioningProfiles</key>
-            <dict>
-              <key>com.aarsanop.harmonymusic</key>
-              <string>HarmonyMusicIOS</string>
-            </dict>
-          </dict>
-          </plist>
-          EOF
-
       - name: Build IPA
-        run: flutter build ipa --release --export-options-plist=ios/exportOptions.plist
+        run: flutter build ipa --release --build-args "DEVELOPMENT_TEAM=Q54GH6LT39 PROVISIONING_PROFILE_SPECIFIER=HarmonyMusicIOS"
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
