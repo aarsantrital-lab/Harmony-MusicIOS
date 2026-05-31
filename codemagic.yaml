@@ -6,13 +6,6 @@ workflows:
       xcode: latest
       vars:
         BUNDLE_ID: "com.aarsanop.harmonymusic"
-    code_signing:
-      ios:
-        certificates:
-          - certificate: AarsanOP.p12
-            password: Aarshan@9746883113
-        provisioning_profiles:
-          - profile: HarmonyMusicIOS.mobileprovision
     cache:
       cache_paths:
         - $CM_BUILD_DIR/.pub-cache
