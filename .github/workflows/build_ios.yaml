@@ -23,19 +23,13 @@ jobs:
         run: |
           sed -i '' 's/com\.anandnet\.harmonymusic/com.aarsanop.harmonymusic/g' ios/Runner.xcodeproj/project.pbxproj
 
-      - name: Inject Development Team & Provisioning Profile
+      - name: Inject Development Team only
         run: |
           TEAM="Q54GH6LT39"
-          PROFILE="HarmonyMusicIOS"
           for config in Debug Release Profile; do
             sed -i '' "/$config/,/buildSettings = {/ {
               /buildSettings = {/ {
                 /DEVELOPMENT_TEAM = .*;/! s/buildSettings = {/& DEVELOPMENT_TEAM = $TEAM;/
-              }
-            }" ios/Runner.xcodeproj/project.pbxproj
-            sed -i '' "/$config/,/buildSettings = {/ {
-              /buildSettings = {/ {
-                /PROVISIONING_PROFILE_SPECIFIER = .*;/! s/buildSettings = {/& PROVISIONING_PROFILE_SPECIFIER = \"$PROFILE\";/
               }
             }" ios/Runner.xcodeproj/project.pbxproj
           done
