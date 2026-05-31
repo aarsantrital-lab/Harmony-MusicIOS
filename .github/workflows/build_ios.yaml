@@ -32,12 +32,28 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
 
-          # Optional: print what profiles are installed (for debugging)
-          ls ~/Library/MobileDevice/Provisioning\ Profiles/
+      - name: Create ExportOptions.plist
+        run: |
+          cat > ios/exportOptions.plist <<EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>development</string>
+            <key>teamID</key>
+            <string>Q54GH6LT39</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.aarsanop.harmonymusic</key>
+              <string>HarmonyMusicIOS</string>
+            </dict>
+          </dict>
+          </plist>
+          EOF
 
       - name: Build IPA
-        run: flutter build ipa --release --extra-build-args="DEVELOPMENT_TEAM=Q54GH6LT39"
-        # If you don't have exportOptions.plist, try just: flutter build ipa --release
+        run: flutter build ipa --release --export-options-plist=ios/exportOptions.plist
 
       - name: Upload IPA
         uses: actions/upload-artifact@v4
