@@ -112,3 +112,4 @@ flutter:
 dependency_overrides:
   meta: 1.15.0
   flutter_rust_bridge: 2.11.1
+  smtc_windows: 0.1.3
